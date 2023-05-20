@@ -27,9 +27,9 @@ const MovieSection: React.FC = () => {
 	const [openFilters, setOpenFilters] = React.useState(false);
 	const [sort, setSort] = React.useState("year");
 	const [ascendingOrder, setAscendingOrder] = React.useState(true);
+	const [previousCursor, setPreviousCursor] = React.useState<string | null>(null);
 
 	const { filter, setFilter } = useContext(FilterContext);
-	console.log(filter);
 
 	const toggleFilters = () => {
 		setOpenFilters(!openFilters);
@@ -56,7 +56,8 @@ const MovieSection: React.FC = () => {
 		// if (page > 1) {
 		// 	setPage(page - 1);
 		// }
-		const newFilter = { ...filter, cursor: null };
+		const newFilter = { ...filter, cursor: previousCursor };
+		setPreviousCursor(filter.cursor);
 		setFilter(newFilter);
 	};
 
@@ -66,9 +67,10 @@ const MovieSection: React.FC = () => {
 		// }
 
 		//Do not forget to escape the cursor value before putting it into the query as it might contain characters such as ?, &
-		nextCursor = encodeURIComponent(nextCursor);
+		//nextCursor = encodeURIComponent(nextCursor);
 
 		const newFilter = { ...filter, cursor: nextCursor };
+		setPreviousCursor(filter.cursor);
 		setFilter(newFilter);
 	};
 

@@ -17,7 +17,7 @@ import { getFullName } from "@/lib/services";
 const MoviePage = () => {
 	const { items, addToWatchlist, removeFromWatchlist } = useContext(WatchlistContext);
 
-	const debug = true;
+	const debug = false;
 	const searchParams = useSearchParams();
 	const movieID = searchParams?.get("id");
 	const movieCountry = searchParams?.get("country");
@@ -57,8 +57,8 @@ const MoviePage = () => {
 			};
 			try {
 				const response = await axios.request(options);
-				console.log(response.data);
-				setMovie(response.data);
+				console.log(response.data?.result);
+				setMovie(response.data?.result);
 			} catch (error) {
 				console.error(error);
 			}
@@ -119,7 +119,7 @@ const MoviePage = () => {
 							</Badge>
 							<Rating>
 								<Rating.Star />
-								<p className="ml-2 my-1 text-sm font-bold text-gray-900 dark:text-white">{movie.imdbRating / 10}</p>
+								<p className="ml-2 my-1 text-sm font-bold text-gray-900 dark:text-white">{(movie.imdbRating / 10).toFixed(1)}</p>
 								<span className="mx-1.5 my-1 h-1 w-1 rounded-full bg-gray-500 dark:bg-gray-400" />
 								<p className="text-sm  my-1 font-medium text-gray-900  dark:text-white">{movie.imdbVoteCount} reviews</p>
 							</Rating>
@@ -128,21 +128,21 @@ const MoviePage = () => {
 						<div className="imageRoll flex flex-row justify-center flex-nowrap overflow-auto my-4">
 							<div className="box flex h-80 w-full items-center justify-center">
 								<Carousel slideInterval={5000} className="object-contain  bg-primary-light  rounded-md">
-									<Image src={movie.posterURLs["500"]} alt={movie.title + " poster"} width={500} height={500} className="object-contain h-80 m-0  rounded-md" />
+									<Image src={movie?.posterURLs?.[500]} alt={movie.title + " poster"} width={500} height={500} className="object-contain h-80 m-0  rounded-md" />
 
-									<Image src={movie.backdropURLs["780"]} alt={movie.title + " backdrop"} width={500} height={500} className="object-contain h-80 m-0 rounded-md" />
+									<Image src={movie?.backdropURLs?.[780]} alt={movie.title + " backdrop"} width={500} height={500} className="object-contain h-80 m-0 rounded-md" />
 								</Carousel>
 							</div>
 						</div>
 						<div className="genres flex gap-3 mb-4">
-							{movie.genres.map((genre, index) => (
+							{movie?.genres?.map((genre, index) => (
 								<Badge key={index} color="gray">
 									{genre.name}
 								</Badge>
 							))}
 						</div>
 						<h3>Description</h3>
-						<p>{movie.overview}</p>
+						<p>{movie?.overview}</p>
 						<h3>Available Streaming</h3>
 						<div className="flex flex-row flex-wrap gap-4">{serviceList()}</div>
 					</article>
@@ -155,11 +155,15 @@ const MoviePage = () => {
 		console.log(movieCountry);
 		//fing streaming services in given country
 		//return list of services
+		console.log(movie);
+
 		let services: IfStreamingInfo | undefined;
-		if (movieCountry) {
-			services = movie?.streamingInfo[movieCountry];
-		} else {
-			services = movie?.streamingInfo["us"];
+		if (movie && movie?.streamingInfo) {
+			if (movieCountry) {
+				services = movie?.streamingInfo?.[movieCountry];
+			} else {
+				services = movie?.streamingInfo?.["us"];
+			}
 		}
 
 		console.log(services);

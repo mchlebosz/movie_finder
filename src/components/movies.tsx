@@ -26,7 +26,7 @@ interface Result {
 }
 
 const Movies: React.FC<{ filters: Filters; nextPage: (nextCursor: string) => void; previousPage: VoidFunction }> = ({ filters, nextPage, previousPage }) => {
-	const debug = true;
+	const debug = false;
 	const [movies, setMovies] = useState<Result | undefined>(undefined);
 
 	const [alert, setAlert] = React.useState({ show: false, message: "", type: "" });
@@ -49,16 +49,19 @@ const Movies: React.FC<{ filters: Filters; nextPage: (nextCursor: string) => voi
 					genre: filters.genre || null,
 					show_original_language: filters.original_language || null,
 					keyword: filters.keyword || null,
+					cursor: filters.cursor || null,
 				},
 				headers: {
 					"X-RapidAPI-Key": process.env.NEXT_PUBLIC_X_RAPIDAPI_KEY,
 					"X-RapidAPI-Host": "streaming-availability.p.rapidapi.com",
 				},
 			};
+			console.log(options);
 			try {
 				try {
 					const response = await axios.request(options);
 					setMovies(response.data);
+					console.log(response.data);
 				} catch (error) {
 					console.error(error);
 				}

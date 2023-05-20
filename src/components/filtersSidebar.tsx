@@ -23,16 +23,15 @@ interface Filters {
 }
 
 const FiltersSidebar: React.FC<{ visible: Boolean; toggle: VoidFunction }> = ({ visible, toggle }) => {
-	const debug = true;
+	const debug = false;
 	const { filter, setFilter } = useContext(FilterContext);
-	console.log(filter);
+
 	const [currentFilters, setCurrentFilters] = React.useState<Filters>(filter);
 	const [availableServices, setAvailableServices] = React.useState({});
 	const [availableGenres, setAvailableGenres] = React.useState({});
 	const [availableCountry, setAvailableCountry] = React.useState([]);
 
 	const [alert, setAlert] = React.useState({ show: false, message: "", type: "" });
-	console.log(currentFilters);
 
 	useEffect(() => {
 		setCurrentFilters(filter);
@@ -161,7 +160,7 @@ const FiltersSidebar: React.FC<{ visible: Boolean; toggle: VoidFunction }> = ({ 
 	const handleCountryChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
 		//console.log(event.target.value);
 		//set to current filters
-		setCurrentFilters((prevState) => ({ ...prevState, country: event.target.value }));
+		setCurrentFilters((prevState) => ({ ...prevState, country: event.target.value.toLowerCase() }));
 	};
 
 	const handleServiceChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -199,8 +198,6 @@ const FiltersSidebar: React.FC<{ visible: Boolean; toggle: VoidFunction }> = ({ 
 	};
 
 	const handleSubmit = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-		//console.log(filters);
-
 		//if currentFilters.services is < 1 or > 4 show error
 		const services = currentFilters.services.split(",").filter((service) => service !== "");
 
@@ -210,8 +207,12 @@ const FiltersSidebar: React.FC<{ visible: Boolean; toggle: VoidFunction }> = ({ 
 			showAlert("Please select between 1 and 4 services", "failure");
 			return;
 		}
+		//reset page to 1
+		setCurrentFilters((prevState) => ({ ...prevState, cursor: null }));
 		showAlert("Filters Applied", "success");
+		console.log(currentFilters);
 		setFilter(currentFilters);
+		console.log(filter);
 	};
 
 	const showAlert = (message: string, type: "failure" | "success" | "warning") => {
@@ -226,7 +227,7 @@ const FiltersSidebar: React.FC<{ visible: Boolean; toggle: VoidFunction }> = ({ 
 		<div className="search-section fixed top-0 left-0 w-full h-full z-10" style={{ display: visible ? "block" : "none" }}>
 			<div className="search-section__search absolute top-0 left-0 right-0 bottom-0 bg-black/50 z-20">
 				<div className="w-fit h-full">
-					<Sidebar aria-label="Default sidebar example" className=" relative w-5/6 sm:4/5 md:w-3/5 lg:1/2 xl: 1/4">
+					<Sidebar aria-label="Default sidebar example" className="relative w-5/6 sm:4/5 md:w-3/5 lg:1/2 xl: 1/4">
 						<button className="absolute top-0 right-0 p-4 text-2xl text-black" onClick={toggle}>
 							<HiOutlineX />
 						</button>
