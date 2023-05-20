@@ -1,21 +1,20 @@
-import { Alert, Button, Spinner } from "../lib/flowbite";
 import HeroSection from "@/components/heroSection";
-import SearchSection from "@/components/searchSection";
+import MovieSection from "@/components/movieSection";
 
-export default function Home() {
+function Home() {
 	return (
 		<main className="min-h-screen ">
 			<section className="h-max">
 				<HeroSection
-					title={"Hello World"}
-					subtitle={"A little website abot something"}
+					title={"Movie Finder"}
+					subtitle={"Aggregate all your favorite movies in one place"}
 					button1={{ name: "Search", url: "#moviesSearch" }}
-					button2={{ name: "Your Watchlist", url: "www.google.com" }}
+					button2={{ name: "Your Watchlist", url: "watchlist" }}
 				/>
 			</section>
-			<section id="moviesSearch" className="h-max">
-				<SearchSection />
-			</section>
+			<MovieSection />
 		</main>
 	);
 }
+
+export default Home;

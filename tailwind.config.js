@@ -45,5 +45,5 @@ module.exports = {
 			serif: ["Merriweather", "serif"],
 		},
 	},
-	plugins: [require("flowbite/plugin")],
+	plugins: [require("flowbite/plugin"), require("flowbite-typography")],
 };
