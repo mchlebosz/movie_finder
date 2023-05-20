@@ -1,29 +1,42 @@
 "use client";
 import React from "react";
-import { HiOutlineX } from "react-icons/hi";
-import { HiOutlineMagnifyingGlass } from "react-icons/hi2";
-import { Sidebar, Select, Spinner, Label, RangeSlider, Button, Checkbox, TextInput } from "../lib/flowbite";
+import { HiExclamation, HiInformationCircle, HiOutlineX } from "react-icons/hi";
+import { HiCheckCircle, HiOutlineMagnifyingGlass, HiXCircle } from "react-icons/hi2";
+import { Sidebar, Select, Spinner, Label, RangeSlider, Button, Checkbox, TextInput, Alert } from "../lib/flowbite";
 import axios from "axios";
-import { useEffect } from "react";
+import { useEffect, useContext } from "react";
 import { Dispatch, SetStateAction } from "react";
 import { getMockedServices, getFullName } from "@/lib/services";
+import getGenres from "@/lib/genres";
+import { FilterContext } from "@/app/context/AppContext";
 
 interface Filters {
 	services: string;
-	genre?: string;
-	keyword?: string;
-	title?: string;
+	genre?: string | null;
+	keyword?: string | null;
+	title?: string | null;
 	country: string;
-	output_language?: string;
-	show_type?: string;
-	original_language?: string;
+	output_language?: string | null;
+	show_type?: string | null;
+	original_language?: string | null;
+	cursor?: string | null;
 }
 
-const FiltersSidebar: React.FC<{ visible: Boolean; toggle: VoidFunction; setFilters: Dispatch<SetStateAction<Filters>>; filters: Filters }> = ({ visible, toggle, setFilters, filters }) => {
-	const debug = false;
+const FiltersSidebar: React.FC<{ visible: Boolean; toggle: VoidFunction }> = ({ visible, toggle }) => {
+	const debug = true;
+	const { filter, setFilter } = useContext(FilterContext);
+	console.log(filter);
+	const [currentFilters, setCurrentFilters] = React.useState<Filters>(filter);
 	const [availableServices, setAvailableServices] = React.useState({});
 	const [availableGenres, setAvailableGenres] = React.useState({});
 	const [availableCountry, setAvailableCountry] = React.useState([]);
+
+	const [alert, setAlert] = React.useState({ show: false, message: "", type: "" });
+	console.log(currentFilters);
+
+	useEffect(() => {
+		setCurrentFilters(filter);
+	}, [filter]);
 
 	useEffect(() => {
 		const fetchServices = async () => {
@@ -48,6 +61,10 @@ const FiltersSidebar: React.FC<{ visible: Boolean; toggle: VoidFunction; setFilt
 			}
 		};
 		const fetchGenres = async () => {
+			if (debug) {
+				setAvailableGenres(getGenres());
+				return;
+			}
 			const options = {
 				method: "GET",
 				url: "https://streaming-availability.p.rapidapi.com/v2/genres",
@@ -56,7 +73,7 @@ const FiltersSidebar: React.FC<{ visible: Boolean; toggle: VoidFunction; setFilt
 					"X-RapidAPI-Host": "streaming-availability.p.rapidapi.com",
 				},
 			};
-			console.log(options);
+			//console.log(options);
 			try {
 				const response = await axios.request(options);
 				setAvailableGenres(response.data.result);
@@ -82,7 +99,7 @@ const FiltersSidebar: React.FC<{ visible: Boolean; toggle: VoidFunction; setFilt
 		fetchCountry();
 
 		return () => {};
-	}, [debug]);
+	}, [currentFilters, debug, filter]);
 
 	const countryOptions = (): React.ReactNode => {
 		if (JSON.stringify(availableCountry) === "{}") return <option>Loading ...</option>;
@@ -102,10 +119,10 @@ const FiltersSidebar: React.FC<{ visible: Boolean; toggle: VoidFunction; setFilt
 			services.push({ id: key, name: value });
 		}
 		return services.map((service: any) => {
-			const isSelected = filters.services.includes(service.id);
+			const isSelected = currentFilters.services.includes(service.id);
 			const selectedServiceContrySupport = service.name.countries;
 			const countries = Object.keys(selectedServiceContrySupport);
-			const selectedCountry = filters.country.toLowerCase();
+			const selectedCountry = currentFilters.country.toLowerCase();
 			const isCountrySupported = countries.includes(selectedCountry);
 			if (!isCountrySupported) return;
 			return (
@@ -126,12 +143,12 @@ const FiltersSidebar: React.FC<{ visible: Boolean; toggle: VoidFunction; setFilt
 
 	const genreOptions = (): React.ReactNode => {
 		if (JSON.stringify(availableGenres) === "{}") return <option>Loading ...</option>;
-		console.log(availableGenres);
+		//console.log(availableGenres);
 		let genres = [];
 		for (const [key, value] of Object.entries(availableGenres)) {
 			genres.push({ id: key, name: value });
 		}
-		console.log(genres);
+		//console.log(genres);
 		return genres.map((genre: any) => {
 			return (
 				<option key={genre.id} value={genre.id}>
@@ -142,17 +159,18 @@ const FiltersSidebar: React.FC<{ visible: Boolean; toggle: VoidFunction; setFilt
 	};
 
 	const handleCountryChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-		console.log(event.target.value);
-		setFilters((prevState) => ({ ...prevState, country: event.target.value }));
+		//console.log(event.target.value);
+		//set to current filters
+		setCurrentFilters((prevState) => ({ ...prevState, country: event.target.value }));
 	};
 
-	const handleServiceChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-		console.log(event.target.value);
+	const handleServiceChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		//console.log(event.target.value);
 		//check if detected name is in the list of services in filters
 		//if it is, remove it
 		//if it isn't, add it
 		//format: {service: "service1, service2" }
-		const services = filters.services.split(",");
+		const services = currentFilters.services.split(",");
 		if (services.includes(event.target.value)) {
 			const index = services.indexOf(event.target.value);
 			if (index > -1) {
@@ -161,18 +179,47 @@ const FiltersSidebar: React.FC<{ visible: Boolean; toggle: VoidFunction; setFilt
 		} else {
 			services.push(event.target.value);
 		}
-		console.log(services);
-		setFilters((prevState) => ({ ...prevState, services: services.join(",") }));
+		//console.log(services);
+		setCurrentFilters((prevState) => ({ ...prevState, services: services.join(",") }));
 	};
 
 	const handleGenreChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
 		console.log(event.target.value);
-		setFilters((prevState) => ({ ...prevState, genre: event.target.value }));
+		setCurrentFilters((prevState) => ({ ...prevState, genre: event.target.value }));
 	};
 
 	const handleShowTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
 		console.log(event.target.value);
-		setFilters((prevState) => ({ ...prevState, show_type: event.target.value }));
+		setCurrentFilters((prevState) => ({ ...prevState, showType: event.target.value }));
+	};
+
+	const handleKeywordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		console.log(event.target.value);
+		setCurrentFilters((prevState) => ({ ...prevState, keyword: event.target.value }));
+	};
+
+	const handleSubmit = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+		//console.log(filters);
+
+		//if currentFilters.services is < 1 or > 4 show error
+		const services = currentFilters.services.split(",").filter((service) => service !== "");
+
+		//console.log(services);
+		if (services.length < 1 || services.length > 4) {
+			//console.log("please select between 1 and 4 services");
+			showAlert("Please select between 1 and 4 services", "failure");
+			return;
+		}
+		showAlert("Filters Applied", "success");
+		setFilter(currentFilters);
+	};
+
+	const showAlert = (message: string, type: "failure" | "success" | "warning") => {
+		const newAlert = { show: true, message: message, type: type };
+		setAlert(newAlert);
+		setTimeout(() => {
+			setAlert({ ...newAlert, show: false });
+		}, 3000);
 	};
 
 	return (
@@ -183,11 +230,20 @@ const FiltersSidebar: React.FC<{ visible: Boolean; toggle: VoidFunction; setFilt
 						<button className="absolute top-0 right-0 p-4 text-2xl text-black" onClick={toggle}>
 							<HiOutlineX />
 						</button>
+						<div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 ">
+							<Alert
+								className={`transition-all  ${alert.show ? "translate-y-0" : "translate-y-32"}`}
+								color={alert.type}
+								icon={alert.type === "failure" ? HiXCircle : alert.type === "success" ? HiCheckCircle : HiExclamation}
+							>
+								<span>{alert.message}</span>
+							</Alert>
+						</div>
 						<Sidebar.Items className="pt-8">
 							<Sidebar.ItemGroup>
 								<Sidebar.Item>
 									<Label htmlFor="serviceCountry">Country</Label>
-									<Select id="serviceCountry" required={true} onChange={handleCountryChange} value={filters.country.toUpperCase()}>
+									<Select id="serviceCountry" required={true} onChange={handleCountryChange} value={currentFilters.country.toUpperCase()}>
 										{countryOptions()}
 									</Select>
 								</Sidebar.Item>
@@ -213,7 +269,12 @@ const FiltersSidebar: React.FC<{ visible: Boolean; toggle: VoidFunction; setFilt
 								</Sidebar.Item>
 								<Sidebar.Item>
 									<Label htmlFor="keyword">Keyword</Label>
-									<TextInput id="keyword" type="text" icon={HiOutlineMagnifyingGlass} placeholder="Search..." required={false} />
+									<TextInput id="keyword" type="text" icon={HiOutlineMagnifyingGlass} placeholder="Search..." required={false} onChange={handleKeywordChange} />
+								</Sidebar.Item>
+								<Sidebar.Item>
+									<Button type="submit" onClick={handleSubmit}>
+										Apply
+									</Button>
 								</Sidebar.Item>
 							</Sidebar.ItemGroup>
 						</Sidebar.Items>

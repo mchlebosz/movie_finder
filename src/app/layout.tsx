@@ -4,6 +4,7 @@ import Script from "next/script";
 
 import { CustomFlowbiteTheme, Flowbite } from "@/lib/flowbite";
 import { WatchlistProvider } from "./context/AppContext.js";
+import { FilterProvider } from "./context/AppContext.js";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,12 +22,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 	return (
 		<html lang="en">
 			<WatchlistProvider>
-				<Flowbite theme={{ theme }}>
-					<body className={inter.className}>
-						{children}
-						<Script src="flowbite.min.js"></Script>
-					</body>
-				</Flowbite>
+				<FilterProvider>
+					<Flowbite theme={{ theme }}>
+						<body className={inter.className}>
+							{children}
+							<Script src="flowbite.min.js"></Script>
+						</body>
+					</Flowbite>
+				</FilterProvider>
 			</WatchlistProvider>
 		</html>
 	);

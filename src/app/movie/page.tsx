@@ -17,7 +17,7 @@ import { getFullName } from "@/lib/services";
 const MoviePage = () => {
 	const { items, addToWatchlist, removeFromWatchlist } = useContext(WatchlistContext);
 
-	const debug = false;
+	const debug = true;
 	const searchParams = useSearchParams();
 	const movieID = searchParams?.get("id");
 	const movieCountry = searchParams?.get("country");

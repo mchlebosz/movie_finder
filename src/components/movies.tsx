@@ -1,19 +1,22 @@
 import MovieCard from "./movieCard";
-import { Pagination, Button, Spinner } from "../lib/flowbite";
+import { Pagination, Button, Spinner, Alert } from "../lib/flowbite";
 import axios from "axios";
 import { AxiosError } from "axios";
 import React, { useState, useEffect } from "react";
 import { getMockMovies } from "@/lib/movies";
+import { HiCheckCircle, HiXCircle } from "react-icons/hi2";
+import { HiExclamation } from "react-icons/hi";
 
 interface Filters {
 	services: string;
-	genre?: string;
-	keyword?: string;
-	title?: string;
+	genre?: string | null;
+	keyword?: string | null;
+	title?: string | null;
 	country: string;
-	output_language?: string;
-	show_type?: string;
-	original_language?: string;
+	output_language?: string | null;
+	show_type?: string | null;
+	original_language?: string | null;
+	cursor?: string | null;
 }
 
 interface Result {
@@ -22,9 +25,11 @@ interface Result {
 	result: Array<any>;
 }
 
-const Movies: React.FC<{ filters: Filters }> = ({ filters }) => {
-	const debug = false;
+const Movies: React.FC<{ filters: Filters; nextPage: (nextCursor: string) => void; previousPage: VoidFunction }> = ({ filters, nextPage, previousPage }) => {
+	const debug = true;
 	const [movies, setMovies] = useState<Result | undefined>(undefined);
+
+	const [alert, setAlert] = React.useState({ show: false, message: "", type: "" });
 
 	useEffect(() => {
 		const fetchMovies = async () => {
@@ -64,8 +69,29 @@ const Movies: React.FC<{ filters: Filters }> = ({ filters }) => {
 		fetchMovies();
 	}, [debug, filters]);
 
-	const onPageChange = (page: number) => {
-		console.log(page);
+	const onPageChange = (direction: number) => {
+		console.log(direction);
+		if (direction == 2) {
+			// next
+			// check if there is a next page
+			// by checking hasMore value
+			if (movies?.hasMore) {
+				nextPage(movies?.nextCursor || "");
+			} else {
+				console.log("no more pages");
+				showAlert("No more pages", "warning");
+			}
+		}
+		if (direction == 1) {
+			// prev
+			// check if there is a prev page
+			// by checking cursor value
+			if (filters.cursor) {
+				previousPage();
+			} else {
+				showAlert("No more pages", "warning");
+			}
+		}
 	};
 
 	const renderMovies = () => {
@@ -80,12 +106,29 @@ const Movies: React.FC<{ filters: Filters }> = ({ filters }) => {
 		}
 	};
 
+	const showAlert = (message: string, type: "failure" | "success" | "warning") => {
+		const newAlert = { show: true, message: message, type: type };
+		setAlert(newAlert);
+		setTimeout(() => {
+			setAlert({ ...newAlert, show: false });
+		}, 3000);
+	};
+
 	return (
 		<div>
 			<div className="movies mx-2 flex flex-row justify-center gap-2 items-start flex-wrap">{renderMovies()}</div>
 
 			<div className="pagination flex flex-row justify-center">
-				<Pagination currentPage={1} totalPages={100} onPageChange={onPageChange} className="py-4" />
+				<Pagination currentPage={1} layout="navigation" onPageChange={onPageChange} showIcons={true} totalPages={2} />
+			</div>
+			<div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 ">
+				<Alert
+					className={`transition-all  ${alert.show ? "translate-y-0" : "translate-y-32"}`}
+					color={alert.type}
+					icon={alert.type === "failure" ? HiXCircle : alert.type === "success" ? HiCheckCircle : HiExclamation}
+				>
+					<span>{alert.message}</span>
+				</Alert>
 			</div>
 		</div>
 	);

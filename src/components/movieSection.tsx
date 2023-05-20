@@ -7,27 +7,29 @@ import axios from "axios";
 import { Alert, Button, Spinner, Dropdown, ToggleSwitch } from "../lib/flowbite";
 import { HiOutlineFilter, HiSortAscending, HiSortDescending } from "react-icons/hi";
 import { IoRadioButtonOffOutline, IoRadioButtonOnOutline } from "react-icons/io5";
-import { useEffect } from "react";
+import { useEffect, useContext } from "react";
 import { DropdownItem } from "flowbite-react/lib/esm/components/Dropdown/DropdownItem";
+
+import { FilterContext } from "@/app/context/AppContext";
 
 interface Filters {
 	services: string;
-	genre?: string;
-	keyword?: string;
-	title?: string;
+	genre?: string | null;
+	keyword?: string | null;
+	title?: string | null;
 	country: string;
-	output_language?: string;
-	show_type?: string;
-	original_language?: string;
+	output_language?: string | null;
+	show_type?: string | null;
+	original_language?: string | null;
+	cursor?: string | null;
 }
 const MovieSection: React.FC = () => {
 	const [openFilters, setOpenFilters] = React.useState(false);
 	const [sort, setSort] = React.useState("year");
 	const [ascendingOrder, setAscendingOrder] = React.useState(true);
-	const [filters, setFilters] = React.useState<Filters>({
-		services: "netflix",
-		country: "us",
-	});
+
+	const { filter, setFilter } = useContext(FilterContext);
+	console.log(filter);
 
 	const toggleFilters = () => {
 		setOpenFilters(!openFilters);
@@ -48,6 +50,26 @@ const MovieSection: React.FC = () => {
 
 	const toggleOrder = () => {
 		setAscendingOrder(!ascendingOrder);
+	};
+
+	const handlePrevious = () => {
+		// if (page > 1) {
+		// 	setPage(page - 1);
+		// }
+		const newFilter = { ...filter, cursor: null };
+		setFilter(newFilter);
+	};
+
+	const handleNext = (nextCursor: string) => {
+		// if (page < movies?.pages) {
+		// 	setPage(page + 1);
+		// }
+
+		//Do not forget to escape the cursor value before putting it into the query as it might contain characters such as ?, &
+		nextCursor = encodeURIComponent(nextCursor);
+
+		const newFilter = { ...filter, cursor: nextCursor };
+		setFilter(newFilter);
 	};
 
 	return (
@@ -73,8 +95,8 @@ const MovieSection: React.FC = () => {
 					</Dropdown.Item>
 				</Dropdown>
 			</div>
-			<Filters toggle={toggleFilters} visible={openFilters} setFilters={setFilters} filters={filters} />
-			<Movies filters={filters} />
+			<Filters toggle={toggleFilters} visible={openFilters} />
+			<Movies filters={filter} previousPage={handlePrevious} nextPage={handleNext} />
 		</section>
 	);
 };
